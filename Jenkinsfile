@@ -7,7 +7,7 @@ pipeline {
   stages {
     stage('CompileandRunSonarAnalysis') {
       steps {
-        withCredentials([string(credentialsId: "SONAR_TOKEN", variable: "SONAR_TOKEN")]) {
+        withCredentials([string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_TOKEN')]) {
           bat("mvn -Dmaven.test.failure.ignore verify sonar:sonar -Dsonar.login=$SONAR_TOKEN -Dsonar.projectKey=easybuggy -Dsonar.host.url=http://localhost:9000/")
         }
       }
@@ -23,7 +23,7 @@ pipeline {
     }
     stage('RunContainerScan') {
       steps {
-        withCredentials([string(credentialsId: "SNYK_TOKEN", variable: "SNYK_TOKEN")]) {
+        withCredentials([string(credentialsId: 'SNYK_TOKEN', variable: 'SNYK_TOKEN')]) {
           script {
             try {
               bat("C:\\snyk\\snyk-win.exe  container test asecurityguru/testeb")
@@ -36,7 +36,7 @@ pipeline {
     }
     stage('RunSnykSCA') {
       steps {
-        withCredentials([string(credentialsId: "SNYK_TOKEN", variable: "SNYK_TOKEN")]) {
+        withCredentials([string(credentialsId: 'SNYK_TOKEN', variable: 'SNYK_TOKEN')]) {
           bat("mvn snyk:test -fn")
         }
       }
