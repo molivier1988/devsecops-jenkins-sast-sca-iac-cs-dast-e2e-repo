@@ -3,6 +3,11 @@ pipeline {
   tools {
     maven 'Maven_3_8_7'
   }
+  environment {
+    DOCKERHUB_CREDENTIALS = 'dockerlogin'
+    IMAGE_NAME = 'tejakummarikuntla/easy-buggy-app'
+    IMAGE_TAG = 'latest'
+  }
 
   stages {
     stage('CompileandRunSonarAnalysis') {
@@ -12,15 +17,24 @@ pipeline {
         }
       }
     }
-    stage('Build') {
-      steps {
-        withDockerRegistry([credentialsId: "dockerlogin", url: ""]) {
-          script {
-            app = docker.build("asecurityguru/testeb")
-          }
+    stage('Build and Push Docker Image') {
+            steps {
+                script {
+                    // Load Docker Hub credentials from Jenkins credentials store
+                    withCredentials([usernamePassword(credentialsId: DOCKERHUB_CREDENTIALS, usernameVariable: 'DOCKERHUB_USERNAME', 
+passwordVariable: 'DOCKERHUB_PASSWORD')]) {
+                        // Login to Docker Hub
+                        sh "docker login -u ${DOCKERHUB_USERNAME} -p ${DOCKERHUB_PASSWORD}"
+                        // Build Docker image
+                        sh "docker build -t ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG} ."
+                        // Tag the Docker image
+                        sh "docker tag ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG} index.docker.io/${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG}"
+                        // Push Docker image to Docker Hub
+                        sh "docker push index.docker.io/${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG}"
+                    }
+                }
+            }
         }
-      }
-    }
     stage('RunContainerScan') {
       steps {
         withCredentials([string(credentialsId: 'SNYK_TOKEN', variable: 'SNYK_TOKEN')]) {
